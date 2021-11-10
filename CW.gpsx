@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ExtendedGpssModel>
+  <Lines>
+    <Line Id="1">PRIOR FUNCTION RN1, D3</Line>
+    <Line Id="4">0.5,2/0.8,1/1,0</Line>
+    <Line Id="11">* функция присваивает заявке наименьший приоритет (2) с вер-тью 0,5</Line>
+    <Line Id="12">* 1 - с вер-тью 0,3, и самый высокий приоритет (0) - с вер-тью 0,2</Line>
+    <Line Id="10">Operator STORAGE 1</Line>
+    <Line Id="14">Techs STORAGE 10</Line>
+    <Line Id="23">OperatorQueue STORAGE 10</Line>
+    <Line Id="25">HighPriorInquiries STORAGE 100</Line>
+    <Line Id="26">MedPriorInquiries STORAGE  100</Line>
+    <Line Id="28">LowPriorInquiries STORAGE  100</Line>
+    <Line Id="29">* не уверена насчёт ограничения вместимости для накопителей Н2...Н4 в 100</Line>
+    <Line Id="3">GENERATE 10,,,,FN$PRIOR</Line>
+    <Line Id="7">* заявки генерируются раз в 10 секунд с определяемым ф-ей приоритетом 0..2</Line>
+    <Line Id="30">GATE SNF OperatorQueue, Out</Line>
+    <Line Id="32">* проверяю очередь к диспетчеру на заполненность, а как посчитать, сколько времени транзакт провёл в очереди?</Line>
+    <Line Id="19">Operators QUEUE OperatorList</Line>
+    <Line Id="8">ENTER Operator</Line>
+    <Line Id="15">ADVANCE 3</Line>
+    <Line Id="16">* пусть оператору нужно 3 минуты на заявку</Line>
+    <Line Id="17">LEAVE Operator</Line>
+    <Line Id="20">*** некоторый трансфер***</Line>
+    <Line Id="33">Out TERMINATE </Line>
+  </Lines>
+</ExtendedGpssModel>
