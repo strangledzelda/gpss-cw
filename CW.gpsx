@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ExtendedGpssModel>
+  <Lines>
+    <Line Id="1">PRIOR FUNCTION RN1, D3</Line>
+    <Line Id="34">0.5,2/0.8,1/1,0</Line>
+    <Line Id="35">* функция присваивает заявке наименьший приоритет (2) с вер-тью 0,5</Line>
+    <Line Id="36">* 1 - с вер-тью 0,3, и самый высокий приоритет (0) - с вер-тью 0,2</Line>
+    <Line Id="37">Operator STORAGE 1</Line>
+    <Line Id="38">Techs STORAGE 10</Line>
+    <Line Id="39">OperatorQueue STORAGE 10</Line>
+    <Line Id="40">HighPriorInquiries STORAGE 100</Line>
+    <Line Id="41">MedPriorInquiries STORAGE  100</Line>
+    <Line Id="42">LowPriorInquiries STORAGE  100</Line>
+    <Line Id="43">* не уверена насчёт ограничения вместимости для накопителей Н2...Н4 в 100</Line>
+    <Line Id="44"></Line>
+    <Line Id="97"></Line>
+    <Line Id="100">*--------------УНИЧТОЖАЕМ ЗАЯВКУ-------------</Line>
+    <Line Id="101">Out TERMINATE</Line>
+    <Line Id="98"></Line>
+    <Line Id="99"></Line>
+    <Line Id="45">*----------------СОЗДАЁМ ЗАЯВКИ----------------</Line>
+    <Line Id="46">GENERATE 1,,,,FN$PRIOR; Заявки генерируются раз в 1 минуту с определяемым ф-ей приоритетом (0, 1 или 2)</Line>
+    <Line Id="75">*----ПРОВЕРЯЕМ ОЧЕРЕДЬ К ОПЕРАТОРУ НА ПЕРЕПОЛНЕНИЕ----</Line>
+    <Line Id="48">GATE SNF OperatorQueue,Out; Если очередь на обработку оператора уже заполнена, то мы сразу выходим</Line>
+    <Line Id="76">*-------ПРОВЕРЯЕМ СОСТОЯНИЯ ОЧЕРЕДИ---------</Line>
+    <Line Id="60">ENTER OperatorQueue </Line>
+    <Line Id="63">                             MARK QueueWaitingTime; Запоминаем время в момент занятия очереди, чтобы потом вычислить длительность ожидания</Line>
+    <Line Id="105">GATE SNF Operator, WaitForOperator; Если оператор занят, то встаём в очередь</Line>
+    <Line Id="81">*------- ОПЕРАТОР ОБРАБАТЫВАЕТ ЗАЯВКУ-------</Line>
+    <Line Id="71">UseOperator LEAVE OperatorQueue </Line>
+    <Line Id="57">                             ASSIGN QueueWaitingTime,(AC1 - QueueWaitingTime) ; Итоговое время ожидания = "Текущее модельное время" - "Запомненное модельное время"</Line>
+    <Line Id="122">TEST LE QueueWaitingTime,15,Out ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
+    <Line Id="84">ENTER Operator </Line>
+    <Line Id="121">ADVANCE 3</Line>
+    <Line Id="82">LEAVE Operator</Line>
+    <Line Id="83">UNLINK OperatorWaitLine,UseOperator,1; Вызываем к оператору следующую (проходите, раздевайтесь) заявку</Line>
+    <Line Id="78">TRANSFER ,TestHighPrQueue; Обожаю спагетти-код, но что поделать...</Line>
+    <Line Id="111">*------------ОЖИДАЕМОПЕРАТОРА---------------</Line>
+    <Line Id="112">WaitForOperator LINK OperatorWaitLine,FIFO; *мизинец медленно отгибается* Пассивизируем транзакт</Line>
+    <Line Id="117">* Пример с LINK/UNLINK подсмотрел в SCHR7A1.GPS, либо в лабах клана Чёрненьких на стр. 11</Line>
+    <Line Id="116"></Line>
+    <Line Id="113">*---ОПРЕДЕЛЯЕТСЯ ОЧЕРЕДЬ ДЛЯ ИСПОЛНЕНИЯ В СООТВЕТСТВИИ С УРОВНЕМ ПРИОРИТЕТА---</Line>
+    <Line Id="164">*---------------------------ТРАНЗАКТ ЗАНИМАЕТ МЕСТО В ОЧЕРЕДИ--------------------</Line>
+    <Line Id="151">* Если в названии переменной или метки присутствует 0, 1 или 2, то этот объект относится к транзакту с соответствующим приоритетом!</Line>
+    <Line Id="79">TestHighPrQueue TEST E PR,0,TestMedPrQueue; Если приоритет равен нулю, то встаём в очередь с высоким приоритетом</Line>
+    <Line Id="143">TRANSFER ,HighPrBuf; Да, GOTO! А что ты мне сделаешь?! Я в другом административном округе!</Line>
+    <Line Id="142">GATE SNF HighPriorInquiries,Out; Если очередь заявок с PR=0 заполнена, то сразу выходим</Line>
+    <Line Id="88">HighPriorBuffer ENTER HighPriorInquiries</Line>
+    <Line Id="118">                             MARK QWaitingTimePr0; Отмечаем, в какое время мы зашли в очередь с PR=0</Line>
+    <Line Id="93">TRANSFER ,HighPriority ; Переходим в очередь заявок с PR=0</Line>
+    <Line Id="145"></Line>
+    <Line Id="89">TestMedPrQueue TEST E PR,1,TestLowPrQueue; Если приоритет равен единице, то встаём в очередь со средним приоритетом</Line>
+    <Line Id="146">TRANSFER ,MedPriorBuffer</Line>
+    <Line Id="147">GATE SNF MedPriorInquiries,Out; Если очередь заявок с PR=1 заполнена, то сразу выходим</Line>
+    <Line Id="90">MedPriorBuffer ENTER MidPriorInquiries</Line>
+    <Line Id="119">MARK QWaitingTimePr1; Отмечаем, в какое время мы зашли в очередь с PR=1</Line>
+    <Line Id="94">TRANSFER ,MediumPriority ; Переходим в очередь заявок с PR=1</Line>
+    <Line Id="91"></Line>
+    <Line Id="148">TestLowPrQueue TEST E PR,2,Out; Если приоритет равен двум, то встаём в очередь с низким приоритетом (все остальные случаи не рассматриваются)</Line>
+    <Line Id="149">TRANSFER ,LowPriorBuffer</Line>
+    <Line Id="150">GATE SNF LowPriorInquiries,Out; Если очередь заявок с PR=2, заполнена, то сразу выходим</Line>
+    <Line Id="95">LowPriorBuffer ENTER LowPriorInquiries</Line>
+    <Line Id="120">MARK QWaitingTimePr2; Отмечаем, в какое время мы зашли в очередь с PR=1</Line>
+    <Line Id="96">TRANSFER ,LowPriority ; Переходим в очередь заявок с PR=2</Line>
+    <Line Id="133"></Line>
+    <Line Id="102">*----ТРАНЗАКТ В ОЧЕРЕДЬ В СООТВЕТСТВИИ С ПРИОРИТЕТОМ ДЕВОЧКИ НЕ ТОЛПИМСЯ ---</Line>
+    <Line Id="103">HighPriority ASSIGN QWaitingTimePr0,(AC1 - QWaitingTimePr0); Считаем, сколько времени транзакт провёл в очереди </Line>
+    <Line Id="131">TEST  LE QWaitingTimePr0,30,Out; Если заявка c PR=0 пробыла в очереди дольше 30 минут, то выкидываем её</Line>
+    <Line Id="134">ENTER Techs</Line>
+    <Line Id="135">ADVANCE  20,2; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами</Line>
+    <Line Id="136">LEAVE Techs</Line>
+    <Line Id="138">TRANSFER ,Out ;  Или нет??</Line>
+    <Line Id="139"></Line>
+    <Line Id="127">MediumPriority ASSIGN QWaitingTimePr1,(AC1 - QWaitingTimePr0)</Line>
+    <Line Id="153">TEST  LE QWaitingTimePr1,120,Out; Если заявка c PR=0 пробыла в очереди дольше 2 часов, то выкидываем её</Line>
+    <Line Id="154">ENTER Techs</Line>
+    <Line Id="155">ADVANCE  15,3</Line>
+    <Line Id="156">LEAVE Techs</Line>
+    <Line Id="157">TRANSFER ,Out</Line>
+    <Line Id="163"></Line>
+    <Line Id="130">LowPriority ASSIGN QWaitingTimePr2,(AC1 - QWaitingTimePr0)</Line>
+    <Line Id="158">TEST  LE QWaitingTimePr2,300,Out; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её</Line>
+    <Line Id="159">ENTER Techs</Line>
+    <Line Id="160">ADVANCE  10,3</Line>
+    <Line Id="161">LEAVE Techs</Line>
+    <Line Id="162">TRANSFER ,Out</Line>
+    <Line Id="128"></Line>
+    <Line Id="104">* Up to date!</Line>
+  </Lines>
+</ExtendedGpssModel>
