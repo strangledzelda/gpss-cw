@@ -19,92 +19,92 @@
     <Line Id="177"></Line>
     <Line Id="178"></Line>
     <Line Id="179">*--------------УНИЧТОЖАЕМ ЗАЯВКУ-------------</Line>
-    <Line Id="180">Out TERMINATE 1</Line>
+    <Line Id="180">Terminate_Transaction TERMINATE 1</Line>
     <Line Id="181"></Line>
     <Line Id="182"></Line>
     <Line Id="183">*----------------СОЗДАЁМ ЗАЯВКИ----------------</Line>
     <Line Id="184">GENERATE 1,,1,,FN$PRIOR; Заявки генерируются раз в 1 минуту с определяемым ф-ей приоритетом (0, 1 или 2)</Line>
     <Line Id="185">*----ПРОВЕРЯЕМ ОЧЕРЕДЬ К ОПЕРАТОРУ НА ПЕРЕПОЛНЕНИЕ----</Line>
-    <Line Id="186">GATE SNF OperatorQueue,Out; Если очередь на обработку оператора уже заполнена, то мы сразу выходим</Line>
+    <Line Id="186">Check_OpQueueOccupancy GATE SNF OperatorQueue,Terminate_Transaction; Если очередь на обработку оператора уже заполнена, то мы сразу выходим</Line>
     <Line Id="187">*-------ПРОВЕРЯЕМ СОСТОЯНИЯ ОЧЕРЕДИ---------</Line>
-    <Line Id="188">ENTER OperatorQueue </Line>
+    <Line Id="188">Enter_OpQueue ENTER OperatorQueue </Line>
     <Line Id="189">                             MARK QueueWaitingTime; Запоминаем время в момент занятия очереди, чтобы потом вычислить длительность ожидания</Line>
     <Line Id="344">;TABULATE P$QueueWaitingTime</Line>
-    <Line Id="190">GATE SNF Operator,WaitForOperator; Если оператор занят, то встаём в очередь</Line>
+    <Line Id="190"> GATE SNF Operator,Enter_OperatorWaitLine; Если оператор занят, то встаём в очередь</Line>
     <Line Id="191">*------- ОПЕРАТОР ОБРАБАТЫВАЕТ ЗАЯВКУ-------</Line>
-    <Line Id="192">UseOperator LEAVE OperatorQueue </Line>
+    <Line Id="192">Leave_OpQueue LEAVE OperatorQueue </Line>
     <Line Id="193">                             ASSIGN QueueWaitingTime,MP$QueueWaitingTime ; Итоговое время ожидания = "Текущее модельное время" - "Запомненное модельное время"</Line>
     <Line Id="342">TABULATE OperatorWaitingTable</Line>
-    <Line Id="194">TEST LE P$QueueWaitingTime,15,Out ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
+    <Line Id="194">TEST LE P$QueueWaitingTime,15,Terminate_Transaction ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
     <Line Id="195">ENTER Operator </Line>
     <Line Id="196">ADVANCE 3</Line>
     <Line Id="197">LEAVE Operator</Line>
-    <Line Id="198">UNLINK OperatorWaitLine,UseOperator,1; Вызываем к оператору следующую (проходите, раздевайтесь) заявку</Line>
-    <Line Id="199">TRANSFER ,TestHighPrQueue; Обожаю спагетти-код, но что поделать...</Line>
+    <Line Id="198">UNLINK OperatorWaitLine,Leave_OpQueue,1; Вызываем к оператору следующую (проходите, раздевайтесь) заявку</Line>
+    <Line Id="199">TRANSFER ,Test_HighPriorityQueue; Обожаю спагетти-код, но что поделать...</Line>
     <Line Id="200">*------------ОЖИДАЕМ ОПЕРАТОРА---------------</Line>
-    <Line Id="201">WaitForOperator LINK OperatorWaitLine,FIFO; *мизинец медленно отгибается* Пассивизируем транзакт</Line>
+    <Line Id="201">Enter_OperatorWaitLine LINK OperatorWaitLine,FIFO; *мизинец медленно отгибается* Пассивизируем транзакт</Line>
     <Line Id="202">* Пример с LINK/UNLINK подсмотрел в SCHR7A1.GPS, либо в лабах клана Чёрненьких на стр. 11</Line>
     <Line Id="203"></Line>
     <Line Id="251"></Line>
     <Line Id="204">*---ОПРЕДЕЛЯЕМ ОЧЕРЕДЬ НА ВЫПОЛНЕНИЕ---</Line>
     <Line Id="206">* Если в названии переменной или метки присутствует 0, 1 или 2, то этот объект относится к транзакту с соответствующим приоритетом!</Line>
-    <Line Id="207">TestHighPrQueue TEST E PR,2,TestMedPrQueue; Если приоритет равен двум, то встаём в очередь с высоким приоритетом</Line>
-    <Line Id="209">GATE SNF HighPriorInquiries,Out; Если очередь заявок с PR=2 заполнена, то сразу выходим</Line>
-    <Line Id="212">TRANSFER ,HighPriority ; Переходим в очередь заявок с PR=2</Line>
+    <Line Id="207">Test_HighPriorityQueue TEST E PR,2,Test_MedPriorityQueue; Если приоритет равен двум, то встаём в очередь с высоким приоритетом</Line>
+    <Line Id="209">GATE SNF HighPriorInquiries,Terminate_Transaction; Если очередь заявок с PR=2 заполнена, то сразу выходим</Line>
+    <Line Id="212">TRANSFER ,Enter_HighPriorityQueue ; Переходим в очередь заявок с PR=2</Line>
     <Line Id="213"></Line>
-    <Line Id="214">TestMedPrQueue TEST E PR,1,TestLowPrQueue; Если приоритет равен единице, то встаём в очередь со средним приоритетом</Line>
-    <Line Id="216">GATE SNF MedPriorInquiries,Out; Если очередь заявок с PR=1 заполнена, то сразу выходим</Line>
-    <Line Id="219">TRANSFER ,MediumPriority ; Переходим в очередь заявок с PR=1</Line>
+    <Line Id="214">Test_MedPriorityQueue TEST E PR,1,Test_LowPriorityQueue; Если приоритет равен единице, то встаём в очередь со средним приоритетом</Line>
+    <Line Id="216">GATE SNF MedPriorInquiries,Terminate_Transaction; Если очередь заявок с PR=1 заполнена, то сразу выходим</Line>
+    <Line Id="219">TRANSFER ,Enter_MediumPriorityQueue ; Переходим в очередь заявок с PR=1</Line>
     <Line Id="220"></Line>
-    <Line Id="221">TestLowPrQueue TEST E PR,0,Out; Если приоритет равен нулю, то встаём в очередь с низким приоритетом (все остальные случаи не рассматриваются)</Line>
-    <Line Id="223">GATE SNF LowPriorInquiries,Out; Если очередь заявок с PR=0, заполнена, то сразу выходим</Line>
-    <Line Id="310">TRANSFER ,LowPriority ; Переходим в очередь заявок с PR=0</Line>
+    <Line Id="221">Test_LowPriorityQueue TEST E PR,0,Terminate_Transaction; Если приоритет равен нулю, то встаём в очередь с низким приоритетом (все остальные случаи не рассматриваются)</Line>
+    <Line Id="223">GATE SNF LowPriorInquiries,Terminate_Transaction; Если очередь заявок с PR=0, заполнена, то сразу выходим</Line>
+    <Line Id="310">TRANSFER ,Enter_LowPriorityQueue ; Переходим в очередь заявок с PR=0</Line>
     <Line Id="227"></Line>
     <Line Id="254"></Line>
     <Line Id="252">*----ВЫПОЛНЯЕМ ЗАЯВКУ С ПРИОРИТЕТОМ 2----</Line>
-    <Line Id="229">HighPriority        ENTER HighPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
+    <Line Id="229">Enter_HighPriorityQueue        ENTER HighPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
     <Line Id="314">MARK TimeSpentInQueue; Отмечаем, в какое время мы зашли в очередь</Line>
     <Line Id="260">GATE SNF Techs,WaitForTech; Если нет свободных техников, то заносим транзакт в список ожидания</Line>
     <Line Id="332">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
-    <Line Id="267">HighUseTech LEAVE HighPriorInquiries</Line>
+    <Line Id="267">Leave_HighPriorityQueue LEAVE HighPriorInquiries</Line>
     <Line Id="257">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди</Line>
     <Line Id="348">TABULATE QueueWaitingTable</Line>
-    <Line Id="230">TEST LE P$TimeSpentInQueue,30,Out; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её (потрачено)</Line>
-    <Line Id="231">ENTER Techs</Line>
+    <Line Id="230">TEST LE P$TimeSpentInQueue,30,TerminateTransaction; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её (потрачено)</Line>
+    <Line Id="231">HighPr_EnterTechs ENTER Techs</Line>
     <Line Id="232">ADVANCE  20,2; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
-    <Line Id="233">LEAVE Techs</Line>
+    <Line Id="233">HighPr_LeaveTechs LEAVE Techs</Line>
     <Line Id="234">UNLINK TechWaitLine,ExecuteAnotherRequest,1; Посылаем следующий транзакт на определение ветви исполнения</Line>
-    <Line Id="270">        TRANSFER ,Out; Завершаем работу (или нет??)</Line>
+    <Line Id="270">        TRANSFER ,Terminate_Transaction; Завершаем работу (или нет??)</Line>
     <Line Id="335"></Line>
     <Line Id="235">*----ВЫПОЛНЕНИЕ ЗАЯВКИ С ПРИОРИТЕТОМ 1----</Line>
-    <Line Id="236">MediumPriority ENTER MedPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
+    <Line Id="236">Enter_MediumPriorityQueue ENTER MedPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
     <Line Id="315">MARK TimeSpentInQueue; Отмечаем, в какое время мы зашли в очередь</Line>
     <Line Id="265">GATE SNF Techs,WaitForTech; Если нет свободных техников, то заносим транзакт в список ожидания</Line>
     <Line Id="333">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
-    <Line Id="258">MidUseTech LEAVE MedPriorInquiries</Line>
+    <Line Id="258">Leave_MedPriorityQueue LEAVE MedPriorInquiries</Line>
     <Line Id="317">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди</Line>
     <Line Id="349">TABULATE QueueWaitingTable</Line>
-    <Line Id="318">TEST LE P$TimeSpentInQueue,120,Out; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её (потрачено)</Line>
-    <Line Id="319">ENTER Techs</Line>
-    <Line Id="320">ADVANCE  15,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
-    <Line Id="321">LEAVE Techs</Line>
+    <Line Id="318">TEST LE P$TimeSpentInQueue,120,TerminateTransaction; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её (потрачено)</Line>
+    <Line Id="319">MedPr_EnterTechs ENTER Techs</Line>
+    <Line Id="320"> ADVANCE  15,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
+    <Line Id="321">MedPr_LeaveTechs LEAVE Techs</Line>
     <Line Id="322">UNLINK TechWaitLine,ExecuteAnotherRequest,1; Посылаем следующий транзакт на определение ветви исполнения</Line>
-    <Line Id="323">        TRANSFER ,Out; Завершаем работу (или нет??)</Line>
+    <Line Id="323">        TRANSFER ,Terminate_Transaction; Завершаем работу (или нет??)</Line>
     <Line Id="336"></Line>
     <Line Id="242">*----ВЫПОЛНЕНИЕ ЗАЯВКИ С ПРИОРИТЕТОМ 0----</Line>
-    <Line Id="243">LowPriority ENTER LowPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
+    <Line Id="243">Enter_LowPriorityQueue ENTER LowPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
     <Line Id="316">MARK TimeSpentInQueue; Отмечаем, в какое время мы зашли в очередь</Line>
     <Line Id="266">GATE SNF Techs,WaitForTech; Если нет свободных техников, то встаём в очередь</Line>
     <Line Id="334">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
-    <Line Id="259">LowUseTech LEAVE LowPriorInquiries</Line>
+    <Line Id="259">Leave_LowPriorityQueue LEAVE LowPriorInquiries</Line>
     <Line Id="324">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue;Считаем, сколько времени транзакт провёл в очереди </Line>
     <Line Id="350">TABULATE QueueWaitingTable</Line>
-    <Line Id="325">TEST LE P$TimeSpentInQueue,300,Out; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
-    <Line Id="326">ENTER Techs</Line>
+    <Line Id="325">TEST LE P$TimeSpentInQueue,300,TerminateTransaction; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
+    <Line Id="326">LowPr_EnterTechs ENTER Techs</Line>
     <Line Id="327">ADVANCE  10,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
-    <Line Id="328">LEAVE Techs</Line>
+    <Line Id="328">LowPr_LeaveTechs LEAVE Techs</Line>
     <Line Id="329">UNLINK TechWaitLine,ExecuteAnotherRequest,1; Посылаем следующий транзакт на определение ветви исполнения</Line>
-    <Line Id="330">        TRANSFER ,Out; Завершаем работу (или нет??)</Line>
+    <Line Id="330">        TRANSFER ,Terminate_Transaction; Завершаем работу (или нет??)</Line>
     <Line Id="337"></Line>
     <Line Id="249">*---------ОЖИДАЕМ ТЫЖПРОГРАММИСТА---------</Line>
     <Line Id="261">* В связи с наличием приоритета заявок можно будет поэкспериментировать с форматом этой очереди (надо же чем-то заполнять пространство в курсовой!)</Line>
@@ -112,11 +112,11 @@
     <Line Id="256">* Пример с LINK/UNLINK подсмотрел в SCHR7A1.GPS, либо в лабах клана Чёрненьких на стр. 11</Line>
     <Line Id="338"></Line>
     <Line Id="302">*-------ОПРЕДЕЛЯЕМ ВЕТВЬ ИСПОЛНЕНИЯ--------</Line>
-    <Line Id="303">ExecuteAnotherRequest TEST E PR,2,TestMidExecute ; Если приоритет равен двум, то исполняемая заявка идёт по пути для заявок с высоким приоритетом</Line>
-    <Line Id="306">TRANSFER ,HighUseTech</Line>
-    <Line Id="305">TestMidExecute TEST E PR,1,TestLowExecute; Если приоритет равен единице, то исполняемая заявка идёт по пути для заявок со средним приоритетом</Line>
-    <Line Id="307">TRANSFER ,MidUseTech</Line>
-    <Line Id="308">TestLowExecute TEST E PR,0,Out; Если приоритет равен нулю, то исполняемая заявка идёт по пути для заявок с низким приоритетом (остальные случаи не рассматриваются)</Line>
-    <Line Id="309">TRANSFER ,LowUseTech</Line>
+    <Line Id="303">ExecuteAnotherRequest TEST E PR,2,TestMedExecute ; Если приоритет равен двум, то исполняемая заявка идёт по пути для заявок с высоким приоритетом</Line>
+    <Line Id="306">TRANSFER ,Leave_HighPriorityQueue</Line>
+    <Line Id="305">TestMedExecute TEST E PR,1,TestLowExecute; Если приоритет равен единице, то исполняемая заявка идёт по пути для заявок со средним приоритетом</Line>
+    <Line Id="307">TRANSFER ,Leave_MedPriorityQueue</Line>
+    <Line Id="308">TestLowExecute TEST E PR,0,TerminateTransaction; Если приоритет равен нулю, то исполняемая заявка идёт по пути для заявок с низким приоритетом (остальные случаи не рассматриваются)</Line>
+    <Line Id="309">TRANSFER ,Leave_LowPriorityQueue</Line>
   </Lines>
 </ExtendedGpssModel>
