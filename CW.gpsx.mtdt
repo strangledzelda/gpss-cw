@@ -3,5 +3,5 @@
   <Entry Key="ModelKey">0</Entry>
   <Entry Key="Zoom">1,00</Entry>
   <Entry Key="Groups"></Entry>
-  <Entry Key="ModelSettings"></Entry>
+  <Entry Key="ModelSettings">Random_Advance=1;Random_ChildObjectSequenceNumber=1;Random_Generate=1;Random_TimeTies=1;Random_Transfer=1;Reports_CreateStandartReports=True;Reports_HasBlocks=True;Reports_HasCEC=True;Reports_HasExperiments=False;Reports_HasFacilities=True;Reports_HasFEC=True;Reports_HasLogicSwitches=True;Reports_HasMatrices=False;Reports_HasNames=True;Reports_HasNumGroups=True;Reports_HasProcedures=False;Reports_HasQueues=True;Reports_HasSavevalues=True;Reports_HasScientific=False;Reports_HasSixPlaces=False;Reports_HasStorages=True;Reports_HasTables=True;Reports_HasUserChains=True;Reports_HasXnGroups=True;Reports_PlusTrace=False;Reports_SavedPlotPoints=40000;Reports_Silence=False;Reports_SuppressPageNumbers=False;Simulation_IntegrationTolerance=1E-06;Simulation_IOSteramErrorStops=False;Simulation_MaxEvaluationDepth=2000;Simulation_MaxMemoryRequest=500000;Simulation_ParameterBlockFirst=1;Simulation_ParameterBlockSize=3;Simulation_PollCount=50;Simulation_SingleCalendarDay=False;Simulation_StackSize=1000;Simulation_SwitchAsteriskAndSharp=False;</Entry>
 </TextMetadata>

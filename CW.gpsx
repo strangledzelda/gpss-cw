@@ -12,6 +12,10 @@
     <Line Id="174">MedPriorInquiries STORAGE  100</Line>
     <Line Id="175">LowPriorInquiries STORAGE  100</Line>
     <Line Id="176">* не уверена насчёт ограничения вместимости для накопителей Н2...Н4 в 100</Line>
+    <Line Id="340"></Line>
+    <Line Id="346">OperatorWaitingTable TABLE P$QueueWaitingTime,0,15,2</Line>
+    <Line Id="347">QueueWaitingTable TABLE P$TimeSpentInQueue,0,30,11</Line>
+    <Line Id="341"></Line>
     <Line Id="177"></Line>
     <Line Id="178"></Line>
     <Line Id="179">*--------------УНИЧТОЖАЕМ ЗАЯВКУ-------------</Line>
@@ -19,17 +23,19 @@
     <Line Id="181"></Line>
     <Line Id="182"></Line>
     <Line Id="183">*----------------СОЗДАЁМ ЗАЯВКИ----------------</Line>
-    <Line Id="184">GENERATE 1,,,,FN$PRIOR; Заявки генерируются раз в 1 минуту с определяемым ф-ей приоритетом (0, 1 или 2)</Line>
+    <Line Id="184">GENERATE 1,,1,,FN$PRIOR; Заявки генерируются раз в 1 минуту с определяемым ф-ей приоритетом (0, 1 или 2)</Line>
     <Line Id="185">*----ПРОВЕРЯЕМ ОЧЕРЕДЬ К ОПЕРАТОРУ НА ПЕРЕПОЛНЕНИЕ----</Line>
     <Line Id="186">GATE SNF OperatorQueue,Out; Если очередь на обработку оператора уже заполнена, то мы сразу выходим</Line>
     <Line Id="187">*-------ПРОВЕРЯЕМ СОСТОЯНИЯ ОЧЕРЕДИ---------</Line>
     <Line Id="188">ENTER OperatorQueue </Line>
     <Line Id="189">                             MARK QueueWaitingTime; Запоминаем время в момент занятия очереди, чтобы потом вычислить длительность ожидания</Line>
+    <Line Id="344">;TABULATE P$QueueWaitingTime</Line>
     <Line Id="190">GATE SNF Operator,WaitForOperator; Если оператор занят, то встаём в очередь</Line>
     <Line Id="191">*------- ОПЕРАТОР ОБРАБАТЫВАЕТ ЗАЯВКУ-------</Line>
     <Line Id="192">UseOperator LEAVE OperatorQueue </Line>
     <Line Id="193">                             ASSIGN QueueWaitingTime,MP$QueueWaitingTime ; Итоговое время ожидания = "Текущее модельное время" - "Запомненное модельное время"</Line>
-    <Line Id="194">TEST LE QueueWaitingTime,15,Out ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
+    <Line Id="342">TABULATE OperatorWaitingTable</Line>
+    <Line Id="194">TEST LE P$QueueWaitingTime,15,Out ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
     <Line Id="195">ENTER Operator </Line>
     <Line Id="196">ADVANCE 3</Line>
     <Line Id="197">LEAVE Operator</Line>
@@ -61,7 +67,8 @@
     <Line Id="260">GATE SNF Techs,WaitForTech; Если нет свободных техников, то заносим транзакт в список ожидания</Line>
     <Line Id="332">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
     <Line Id="267">HighUseTech LEAVE HighPriorInquiries</Line>
-    <Line Id="257">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди </Line>
+    <Line Id="257">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди</Line>
+    <Line Id="348">TABULATE QueueWaitingTable</Line>
     <Line Id="230">TEST LE TimeSpentInQueue,30,Out; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её (потрачено)</Line>
     <Line Id="231">ENTER Techs</Line>
     <Line Id="232">ADVANCE  20,2; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
@@ -70,12 +77,13 @@
     <Line Id="270">        TRANSFER ,Out; Завершаем работу (или нет??)</Line>
     <Line Id="335"></Line>
     <Line Id="235">*----ВЫПОЛНЕНИЕ ЗАЯВКИ С ПРИОРИТЕТОМ 1----</Line>
-    <Line Id="236">MediumPriority ENTER MidPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
+    <Line Id="236">MediumPriority ENTER MedPriorInquiries; ДЕВОЧКИ НЕ ТОЛПИМСЯ</Line>
     <Line Id="315">MARK TimeSpentInQueue; Отмечаем, в какое время мы зашли в очередь</Line>
     <Line Id="265">GATE SNF Techs,WaitForTech; Если нет свободных техников, то заносим транзакт в список ожидания</Line>
     <Line Id="333">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
-    <Line Id="258">MidUseTech LEAVE MidPriorInquiries</Line>
-    <Line Id="317">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди </Line>
+    <Line Id="258">MidUseTech LEAVE MedPriorInquiries</Line>
+    <Line Id="317">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди</Line>
+    <Line Id="349">TABULATE QueueWaitingTable</Line>
     <Line Id="318">TEST LE TimeSpentInQueue,120,Out; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её (потрачено)</Line>
     <Line Id="319">ENTER Techs</Line>
     <Line Id="320">ADVANCE  15,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
@@ -90,6 +98,7 @@
     <Line Id="334">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
     <Line Id="259">LowUseTech LEAVE LowPriorInquiries</Line>
     <Line Id="324">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue;Считаем, сколько времени транзакт провёл в очереди </Line>
+    <Line Id="350">TABULATE QueueWaitingTable</Line>
     <Line Id="325">TEST LE TimeSpentInQueue,300,Out; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
     <Line Id="326">ENTER Techs</Line>
     <Line Id="327">ADVANCE  10,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
