@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ExtendedGpssModel>
   <Lines>
-    <Line Id="1">PRIOR FUNCTION RN1, D3</Line>
-    <Line Id="167">0.5,0/0.8,1/1,2</Line>
+    <Line Id="1">PRIOR FUNCTION RN1,D3 </Line>
+    <Line Id="339">0.5,0/0.8,1/1,2</Line>
     <Line Id="168">* функция присваивает заявке наименьший приоритет (0) с вер-тью 0,5</Line>
     <Line Id="169">* 1 - с вер-тью 0,3, и самый высокий приоритет (2) - с вер-тью 0,2</Line>
     <Line Id="170">Operator STORAGE 1</Line>
@@ -15,7 +15,7 @@
     <Line Id="177"></Line>
     <Line Id="178"></Line>
     <Line Id="179">*--------------УНИЧТОЖАЕМ ЗАЯВКУ-------------</Line>
-    <Line Id="180">Out TERMINATE</Line>
+    <Line Id="180">Out TERMINATE 1</Line>
     <Line Id="181"></Line>
     <Line Id="182"></Line>
     <Line Id="183">*----------------СОЗДАЁМ ЗАЯВКИ----------------</Line>
@@ -62,7 +62,7 @@
     <Line Id="332">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
     <Line Id="267">HighUseTech LEAVE HighPriorInquiries</Line>
     <Line Id="257">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди </Line>
-    <Line Id="230">TEST  LE TimeSpentInQueue,30,Out; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её (потрачено)</Line>
+    <Line Id="230">TEST LE TimeSpentInQueue,30,Out; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её (потрачено)</Line>
     <Line Id="231">ENTER Techs</Line>
     <Line Id="232">ADVANCE  20,2; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
     <Line Id="233">LEAVE Techs</Line>
@@ -76,7 +76,7 @@
     <Line Id="333">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
     <Line Id="258">MidUseTech LEAVE MidPriorInquiries</Line>
     <Line Id="317">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди </Line>
-    <Line Id="318">TEST  LE TimeSpentInQueue,120,Out; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её (потрачено)</Line>
+    <Line Id="318">TEST LE TimeSpentInQueue,120,Out; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её (потрачено)</Line>
     <Line Id="319">ENTER Techs</Line>
     <Line Id="320">ADVANCE  15,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
     <Line Id="321">LEAVE Techs</Line>
@@ -88,9 +88,9 @@
     <Line Id="316">MARK TimeSpentInQueue; Отмечаем, в какое время мы зашли в очередь</Line>
     <Line Id="266">GATE SNF Techs,WaitForTech; Если нет свободных техников, то встаём в очередь</Line>
     <Line Id="334">*------------ТЕХНИК ВЫПОЛНЯЕТ ЗАЯВКУ------------</Line>
-    <Line Id="259">MidUseTech LEAVE LowPriorInquiries</Line>
+    <Line Id="259">LowUseTech LEAVE LowPriorInquiries</Line>
     <Line Id="324">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue;Считаем, сколько времени транзакт провёл в очереди </Line>
-    <Line Id="325">TEST  LE TimeSpentInQueue,300,Out; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
+    <Line Id="325">TEST LE TimeSpentInQueue,300,Out; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
     <Line Id="326">ENTER Techs</Line>
     <Line Id="327">ADVANCE  10,3; Поняла, что мы как-то не продумали, сколько техадмины будут работать над заявками с разными приоритетами (и всё замечательно сделала!)</Line>
     <Line Id="328">LEAVE Techs</Line>
