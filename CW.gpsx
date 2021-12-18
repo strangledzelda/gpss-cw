@@ -6,23 +6,32 @@
     <Line Id="168">* функция присваивает заявке наименьший приоритет (0) с вер-тью 0,5</Line>
     <Line Id="169">* 1 - с вер-тью 0,3, и самый высокий приоритет (2) - с вер-тью 0,2</Line>
     <Line Id="170"></Line>
-    <Line Id="374">Operator STORAGE 1</Line>
-    <Line Id="171">Techs STORAGE 5</Line>
-    <Line Id="172">OperatorQueue STORAGE 200</Line>
-    <Line Id="173">HighPriorInquiries STORAGE 4</Line>
-    <Line Id="174">MedPriorInquiries STORAGE  6</Line>
-    <Line Id="175">LowPriorInquiries STORAGE  10</Line>
+    <Line Id="374">Operator STORAGE 3</Line>
+    <Line Id="171">Techs STORAGE 1</Line>
+    <Line Id="172">OperatorQueue STORAGE 500</Line>
+    <Line Id="173">HighPriorInquiries STORAGE 500</Line>
+    <Line Id="174">MedPriorInquiries STORAGE  500</Line>
+    <Line Id="175">LowPriorInquiries STORAGE  500</Line>
+    <Line Id="376"></Line>
+    <Line Id="377"></Line>
+    <Line Id="378">*------CЧЁТЧИК МОДЕЛЬНОГО ВРЕМЕНИ-------</Line>
+    <Line Id="379">ModelTime GENERATE 480,,480,,3</Line>
+    <Line Id="380">ModelTime_End TERMINATE 1</Line>
+    <Line Id="381"></Line>
+    <Line Id="384"></Line>
+    <Line Id="382">*----УНИЧТОЖАЕМ ПРОВАЛЕННУЮ ЗАЯВКУ----</Line>
+    <Line Id="383">Terminate_Failured_Transaction TERMINATE 0</Line>
     <Line Id="177"></Line>
     <Line Id="178"></Line>
-    <Line Id="179">*--------------УНИЧТОЖАЕМ ЗАЯВКУ-------------</Line>
-    <Line Id="180">Terminate_Transaction TERMINATE 1</Line>
+    <Line Id="179">*----УНИЧТОЖАЕМ ВЫПОЛНЕННУЮ ЗАЯВКУ----</Line>
+    <Line Id="180">Terminate_Succeded_Transaction TERMINATE 0</Line>
     <Line Id="181"></Line>
     <Line Id="182"></Line>
     <Line Id="183">*----------------СОЗДАЁМ ЗАЯВКИ----------------</Line>
-    <Line Id="184">GENERATE 1,,1,,FN$PRIOR; Заявки генерируются раз в 1 минуту с определяемым ф-ей приоритетом (0, 1 или 2)</Line>
+    <Line Id="184">GENERATE (Exponential(2,.5,.25)),,1,,FN$PRIOR; Заявки генерируются раз в 1 минуту с определяемым ф-ей приоритетом (0, 1 или 2)</Line>
     <Line Id="375"></Line>
     <Line Id="185">*----ПРОВЕРЯЕМ ОЧЕРЕДЬ К ОПЕРАТОРУ НА ПЕРЕПОЛНЕНИЕ----</Line>
-    <Line Id="186">Check_OpQueueOccupancy GATE SNF OperatorQueue,Terminate_Transaction; Если очередь на обработку оператора уже заполнена, то мы сразу выходим</Line>
+    <Line Id="186">Check_OpQueueOccupancy GATE SNF OperatorQueue,Terminate_Failured_Transaction; Если очередь на обработку оператора уже заполнена, то мы сразу выходим</Line>
     <Line Id="353"></Line>
     <Line Id="187">*-------ПРОВЕРЯЕМ СОСТОЯНИЯ ОЧЕРЕДИ---------</Line>
     <Line Id="188">Enter_OpQueue ENTER OperatorQueue</Line>
@@ -34,7 +43,7 @@
     <Line Id="365">Leave_OpQueue DEPART OperatorQueue_Stats</Line>
     <Line Id="192">LEAVE OperatorQueue </Line>
     <Line Id="193">                             ASSIGN QueueWaitingTime,MP$QueueWaitingTime ; Итоговое время ожидания = "Текущее модельное время" - "Запомненное модельное время"</Line>
-    <Line Id="194">Check_WaitTimeExpired TEST LE P$QueueWaitingTime,15,Terminate_Transaction ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
+    <Line Id="194">Check_WaitTimeExpired TEST LE P$QueueWaitingTime,15,Terminate_Failured_Transaction ; Если заявка пробыла в очереди дольше 15 минут, то выкидываем её</Line>
     <Line Id="195">ENTER Operator </Line>
     <Line Id="196">ADVANCE 3</Line>
     <Line Id="197">LEAVE Operator</Line>
@@ -48,15 +57,15 @@
     <Line Id="204">*---ОПРЕДЕЛЯЕМ ОЧЕРЕДЬ НА ВЫПОЛНЕНИЕ---</Line>
     <Line Id="206">* Если в названии переменной или метки присутствует 0, 1 или 2, то этот объект относится к транзакту с соответствующим приоритетом!</Line>
     <Line Id="207">Test_HighPriorityQueue TEST E PR,2,Test_MedPriorityQueue; Если приоритет равен двум, то встаём в очередь с высоким приоритетом</Line>
-    <Line Id="209">GATE SNF HighPriorInquiries,Terminate_Transaction; Если очередь заявок с PR=2 заполнена, то сразу выходим</Line>
+    <Line Id="209">GATE SNF HighPriorInquiries,Terminate_Failured_Transaction; Если очередь заявок с PR=2 заполнена, то сразу выходим</Line>
     <Line Id="212">TRANSFER ,Enter_HighPriorityQueue ; Переходим в очередь заявок с PR=2</Line>
     <Line Id="213"></Line>
     <Line Id="214">Test_MedPriorityQueue TEST E PR,1,Test_LowPriorityQueue; Если приоритет равен единице, то встаём в очередь со средним приоритетом</Line>
-    <Line Id="216">GATE SNF MedPriorInquiries,Terminate_Transaction; Если очередь заявок с PR=1 заполнена, то сразу выходим</Line>
+    <Line Id="216">GATE SNF MedPriorInquiries,Terminate_Failured_Transaction; Если очередь заявок с PR=1 заполнена, то сразу выходим</Line>
     <Line Id="219">TRANSFER ,Enter_MediumPriorityQueue ; Переходим в очередь заявок с PR=1</Line>
     <Line Id="220"></Line>
-    <Line Id="221">Test_LowPriorityQueue TEST E PR,0,Terminate_Transaction; Если приоритет равен нулю, то встаём в очередь с низким приоритетом (все остальные случаи не рассматриваются)</Line>
-    <Line Id="223">GATE SNF LowPriorInquiries,Terminate_Transaction; Если очередь заявок с PR=0, заполнена, то сразу выходим</Line>
+    <Line Id="221">Test_LowPriorityQueue TEST E PR,0,Terminate_Failured_Transaction; Если приоритет равен нулю, то встаём в очередь с низким приоритетом (все остальные случаи не рассматриваются)</Line>
+    <Line Id="223">GATE SNF LowPriorInquiries,Terminate_Failured_Transaction; Если очередь заявок с PR=0, заполнена, то сразу выходим</Line>
     <Line Id="310">TRANSFER ,Enter_LowPriorityQueue ; Переходим в очередь заявок с PR=0</Line>
     <Line Id="227"></Line>
     <Line Id="254"></Line>
@@ -70,12 +79,12 @@
     <Line Id="367">Execute_HighPriorityInquiry DEPART  HighPrInquiries_Stats</Line>
     <Line Id="267">LEAVE HighPriorInquiries</Line>
     <Line Id="257">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди</Line>
-    <Line Id="230">Check_HighPriorityTimeExpired TEST LE P$TimeSpentInQueue,30,TerminateTransaction; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её</Line>
+    <Line Id="230">Check_HighPriorityTimeExpired TEST LE P$TimeSpentInQueue,30,Terminate_Failured_Transaction; Если заявка c PR=2 пробыла в очереди дольше 30 минут, то выкидываем её</Line>
     <Line Id="231"> ENTER Techs</Line>
     <Line Id="232">ADVANCE  20,2</Line>
     <Line Id="233"> LEAVE Techs</Line>
     <Line Id="234">UNLINK TechWaitLine,ExecuteAnotherRequest,1; Посылаем следующий транзакт на определение ветви исполнения</Line>
-    <Line Id="270">        TRANSFER ,Terminate_Transaction; Заявка выполнена, уничтожаем транзакт</Line>
+    <Line Id="270">        TRANSFER ,Terminate_Succeded_Transaction; Заявка выполнена, уничтожаем транзакт</Line>
     <Line Id="335"></Line>
     <Line Id="356"></Line>
     <Line Id="235">*----ВЫПОЛНЕНИЕ ЗАЯВКИ С ПРИОРИТЕТОМ 1----</Line>
@@ -88,12 +97,12 @@
     <Line Id="369">Execute_MediumPriorityInquiry DEPART MedPrInquiries_Stats</Line>
     <Line Id="258">LEAVE MedPriorInquiries</Line>
     <Line Id="317">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue; Считаем, сколько времени транзакт провёл в очереди</Line>
-    <Line Id="318">Check_MediumPriorityTimeExpired TEST LE P$TimeSpentInQueue,120,TerminateTransaction; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её</Line>
+    <Line Id="318">Check_MediumPriorityTimeExpired TEST LE P$TimeSpentInQueue,120,Terminate_Failured_Transaction; Если заявка c PR=1 пробыла в очереди дольше 2 часов, то выкидываем её</Line>
     <Line Id="319"> ENTER Techs</Line>
     <Line Id="320"> ADVANCE  15,3</Line>
     <Line Id="321">LEAVE Techs</Line>
     <Line Id="322">UNLINK TechWaitLine,ExecuteAnotherRequest,1; Посылаем следующий транзакт на определение ветви исполнения</Line>
-    <Line Id="323">        TRANSFER ,Terminate_Transaction; Заявка выполнена, уничтожаем транзакт</Line>
+    <Line Id="323">        TRANSFER ,Terminate_Succeded_Transaction; Заявка выполнена, уничтожаем транзакт</Line>
     <Line Id="336"></Line>
     <Line Id="358"></Line>
     <Line Id="242">*----ВЫПОЛНЕНИЕ ЗАЯВКИ С ПРИОРИТЕТОМ 0----</Line>
@@ -106,12 +115,12 @@
     <Line Id="371">Execute_LowPriorityInquiry DEPART LowPrInquiries_Stats</Line>
     <Line Id="259">LEAVE LowPriorInquiries</Line>
     <Line Id="324">ASSIGN TimeSpentInQueue,MP$TimeSpentInQueue;Считаем, сколько времени транзакт провёл в очереди </Line>
-    <Line Id="325">Check_LowPriorityTimeExpired TEST LE P$TimeSpentInQueue,300,TerminateTransaction; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
+    <Line Id="325">Check_LowPriorityTimeExpired TEST LE P$TimeSpentInQueue,300,Terminate_Failured_Transaction; Если заявка c PR=0 пробыла в очереди дольше 5 часов, то выкидываем её (потрачено)</Line>
     <Line Id="326"> ENTER Techs</Line>
     <Line Id="327">ADVANCE  10,3</Line>
     <Line Id="328"> LEAVE Techs</Line>
     <Line Id="329">UNLINK TechWaitLine,ExecuteAnotherRequest,1; Посылаем следующий транзакт на определение ветви исполнения</Line>
-    <Line Id="330">        TRANSFER ,Terminate_Transaction; Заявка выполнена, уничтожаем транзакт</Line>
+    <Line Id="330">        TRANSFER ,Terminate_Succeded_Transaction; Заявка выполнена, уничтожаем транзакт</Line>
     <Line Id="337"></Line>
     <Line Id="249">*---------ОЖИДАЕМ ТЫЖПРОГРАММИСТА---------</Line>
     <Line Id="255">WaitForTech LINK TechWaitLine,FIFO</Line>
@@ -122,7 +131,7 @@
     <Line Id="306">TRANSFER ,Execute_HighPriorityInquiry</Line>
     <Line Id="305">TestMedExecute TEST E PR,1,TestLowExecute; Если приоритет равен единице, то исполняемая заявка идёт по пути для заявок со средним приоритетом</Line>
     <Line Id="307">TRANSFER ,Execute_MediumPriorityInquiry</Line>
-    <Line Id="308">TestLowExecute TEST E PR,0,TerminateTransaction; Если приоритет равен нулю, то исполняемая заявка идёт по пути для заявок с низким приоритетом (остальные случаи не рассматриваются)</Line>
+    <Line Id="308">TestLowExecute TEST E PR,0,Terminate_Failured_Transaction; Если приоритет равен нулю, то исполняемая заявка идёт по пути для заявок с низким приоритетом (остальные случаи не рассматриваются)</Line>
     <Line Id="309">TRANSFER ,Execute_LowPriorityInquiry</Line>
   </Lines>
 </ExtendedGpssModel>
