@@ -6,8 +6,8 @@
     <Line Id="168">* функция присваивает заявке наименьший приоритет (0) с вер-тью 0,5</Line>
     <Line Id="169">* 1 - с вер-тью 0,3, и самый высокий приоритет (2) - с вер-тью 0,2</Line>
     <Line Id="170"></Line>
-    <Line Id="374">Operator STORAGE 3</Line>
-    <Line Id="171">Techs STORAGE 28</Line>
+    <Line Id="374">Operator STORAGE 1</Line>
+    <Line Id="171">Techs STORAGE 10</Line>
     <Line Id="172">OperatorQueue STORAGE 500</Line>
     <Line Id="173">HighPriorInquiries STORAGE 500</Line>
     <Line Id="174">MedPriorInquiries STORAGE  500</Line>
